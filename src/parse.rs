@@ -1,4 +1,5 @@
 pub mod parse{
+    use std::borrow::BorrowMut;
     use std::io::{Write};
     use std::{format};
     use std::net::TcpStream;
@@ -7,16 +8,22 @@ pub mod parse{
     use crate::counter::counter::counter::Counter;
     use std::cell::RefCell;
 
-    pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &RefCell<Counter>, subs: &mut Vec<TcpStream>, stream: &Rc<RefCell<TcpStream>>) -> Option<String>{
+    use std::sync::{Arc, RwLock, Mutex};
+
+    pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &Arc<RwLock<Counter>>, subs: &mut Arc<Mutex<Option<Vec<TcpStream>>>>, stream: &Rc<RefCell<TcpStream>>) -> Option<String>{
         // Token array should look something like [{, COMMAND, COLON, ACTION, COMMA, VALUE, COLON, INT, }]
         if commands[3].token == GET{
-            Some(format!("{{value: {}}}", counter.borrow().state))
+            let x = counter.clone();
+            let val = x.try_read().unwrap();
+            Some(format!("{{value: {}}}", &val.state))
         }
         else if commands[3].token == SET {
-            counter.borrow_mut().alter_state(commands[7].literal.parse::<i64>().unwrap());
-            let message = format!("{{value: {}}}\n", counter.borrow().state);
-            // let refs = subs.borrow_mut();
-            for stream in subs.into_iter(){
+            let x = counter.clone();
+            let mut val = x.try_write().unwrap();
+            val.alter_state(commands[7].literal.parse::<i64>().unwrap());
+            let message = format!("{{value: {}}}\n", &val.state);
+            let refs = subs.lock().unwrap().take().unwrap();
+            for mut stream in refs.into_iter(){
                 println!("Writing");
                 println!("{:?}", stream);
                 println!("{}", message);
@@ -28,8 +35,9 @@ pub mod parse{
         }
         else{
             // let mut refs = subs.borrow_mut();
-            let s = stream.borrow_mut();
-            subs.push(s.try_clone().unwrap());
+            let s = stream.clone().borrow().try_clone().unwrap();
+            let mut refs = subs.lock().unwrap().take().unwrap();
+            refs.push(s);
             println!("{:?}", subs);
             None
         }

@@ -7,28 +7,35 @@ mod subscribe;
 use std::rc::Rc;
 use std::io::prelude::*;
 use std::cell::RefCell;
+use std::thread::spawn;
 use std::{io::{Read}, net::{TcpListener, TcpStream}};
 use counter::counter::counter::Counter;
-use subscribe::subscribe::subscribe::Subscribers;
 use crate::parse::parse::parse_tokens;
 use crate::process_commands::process_commands::process_commands as process;
 
+use std::sync::{RwLock, Arc, Mutex}
+;
 fn main() {
-    let global_state: RefCell<Counter> = RefCell::new(Counter::new(0));
+    let global_state: Arc<RwLock<Counter>> = Arc::new(RwLock::new(Counter::new(0)));
     // let subscribers: Rc<RefCell<Subscribers>> = Rc::new(RefCell::new(Subscribers::new()));
-    let mut subscribers: Vec<TcpStream> = Vec::new();
+    let mut subscribers: Arc<Mutex<Option<Vec<TcpStream>>>> = Arc::new(Mutex::new(Some(Vec::new())));
     let listen = TcpListener::bind("127.0.0.1:8080").unwrap();
     for stream in listen.incoming(){
-        let stream: Rc<RefCell<TcpStream>> = Rc::new(RefCell::new(stream.unwrap()));
-        loop{
-            println!("Connection established!");
-            let input_str = handler(&stream);
-            let commands = process::process_commands(input_str);
-            let value = match parse_tokens(&commands, &global_state, &mut subscribers, &stream){
-                Some(v) => writer(&stream, v),
-                None => writer(&stream, String::from("subscribed"))
-            };
-        }
+        println!("Connection established!");
+        let y = global_state.clone();
+        let mut subs = subscribers.clone();
+        spawn( move ||{
+                let stream: Rc<RefCell<TcpStream>> = Rc::new(RefCell::new(stream.unwrap()));
+                loop{
+                    let input_str = handler(&stream);
+                    let commands = process::process_commands(input_str);
+                    let value = match parse_tokens(&commands, &y, &mut subs, &stream){
+                        Some(v) => writer(&stream, v),
+                        None => writer(&stream, String::from("subscribed"))
+                    };
+                }
+            }
+        );
     }
 }
 
