@@ -19,10 +19,11 @@ use process_commands::process_commands::process_commands::*;
 use std::sync::{RwLock, Arc, Mutex};
 type Subs = Arc<Mutex<Vec<TcpStream>>>;
 type MutCount = Arc<RwLock<Counter>>;
+
 fn main() {
-    let global_state: Arc<RwLock<Counter>> = Arc::new(RwLock::new(Counter::new(0)));
+    let global_state: MutCount = Arc::new(RwLock::new(Counter::new(0)));
     // let subscribers: Rc<RefCell<Subscribers>> = Rc::new(RefCell::new(Subscribers::new()));
-    let subscribers: Arc<Mutex<Vec<TcpStream>>> = Arc::new(Mutex::new(Vec::new()));
+    let subscribers: Subs = Arc::new(Mutex::new(Vec::new()));
     let listen = TcpListener::bind("127.0.0.1:8080").unwrap();
     for stream in listen.incoming(){
         let y = global_state.clone();
@@ -52,8 +53,9 @@ fn handler(stream: &TcpStream) -> String{
         let mut buffer = vec![0; 100];();
         let mut s = stream;
         s.read(&mut buffer).unwrap();
+        println!("{:?}", buffer);
         let request = String::from_utf8(buffer[..].to_vec()).unwrap();
-        request
+        request.chars().filter(|char| !char.is_whitespace()).collect()
 }
 
 fn writer(stream: &mut Rc<RefCell<&TcpStream>>, value: String){

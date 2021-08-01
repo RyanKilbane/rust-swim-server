@@ -27,8 +27,9 @@ pub mod parse{
             let message = format!("{{value: {}}}", count.state);
             let sub = subs.lock().unwrap();
             let x = sub.as_slice();
-
+            println!("{:?}", x);
             for mut stream in x.into_iter(){
+                stream.flush().unwrap();
                 println!("Writing");
                 println!("{:?}", stream);
                 println!("{}", message);
