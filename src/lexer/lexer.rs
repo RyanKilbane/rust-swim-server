@@ -1,5 +1,4 @@
 pub mod lexer{
-    use std::borrow::Borrow;
 
     use crate::token::token::token::{*, self};
 

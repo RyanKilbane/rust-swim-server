@@ -7,20 +7,19 @@ mod subscribe;
 use std::rc::Rc;
 use std::io::prelude::*;
 use std::cell::RefCell;
-use std::thread::{self, spawn};
+use std::thread::{self};
 use std::{io::{Read}, net::{TcpListener, TcpStream}};
 use counter::counter::counter::Counter;
 use crate::parse::parse::parse_tokens;
-use rayon::ThreadPoolBuilder;
 use process_commands::process_commands::process_commands::*;
 
 use std::sync::{RwLock, Arc, Mutex};
-type subs = Arc<Mutex<Vec<TcpStream>>>;
-type mut_count = Arc<RwLock<Counter>>;
+type Subs = Arc<Mutex<Vec<TcpStream>>>;
+type MutCount = Arc<RwLock<Counter>>;
 fn main() {
     let global_state: Arc<RwLock<Counter>> = Arc::new(RwLock::new(Counter::new(0)));
     // let subscribers: Rc<RefCell<Subscribers>> = Rc::new(RefCell::new(Subscribers::new()));
-    let mut subscribers: Arc<Mutex<Vec<TcpStream>>> = Arc::new(Mutex::new(Vec::new()));
+    let subscribers: Arc<Mutex<Vec<TcpStream>>> = Arc::new(Mutex::new(Vec::new()));
     let listen = TcpListener::bind("127.0.0.1:8080").unwrap();
     for stream in listen.incoming(){
         println!("Connection established!");
@@ -31,13 +30,13 @@ fn main() {
 }
 
 
-fn handle_connection(mut stream: &TcpStream, mut subs: &mut subs, counter: &mut_count){
+fn handle_connection(stream: &TcpStream, mut subs: &mut Subs, counter: &MutCount){
     println!("Connected!");
     loop{
         let mut mutable_stream: Rc<RefCell<&TcpStream>> = Rc::new(RefCell::new(stream));
         let input_stream = handler(&stream);
         let commands = process_commands(input_stream);
-        let value = match parse_tokens(&commands, counter, &mut subs, stream){
+        match parse_tokens(&commands, counter, &mut subs, stream){
             Some(v) => writer(&mut mutable_stream, v),
             None => writer(&mut mutable_stream, String::from("subscribed"))
         };
