@@ -22,7 +22,6 @@ fn main() {
     let subscribers: Arc<Mutex<Vec<TcpStream>>> = Arc::new(Mutex::new(Vec::new()));
     let listen = TcpListener::bind("127.0.0.1:8080").unwrap();
     for stream in listen.incoming(){
-        println!("Connection established!");
         let y = global_state.clone();
         let mut subs = subscribers.clone();
         thread::spawn(move || handle_connection(&stream.unwrap(), &mut subs, &y));

@@ -14,7 +14,7 @@ pub mod parse{
         else if commands[3].token == SET {
             let mut count = counter.try_write().unwrap();
             count.alter_state(commands[7].literal.parse::<i64>().unwrap());
-            let message = format!("{{value: {}}}\n", count.state);
+            let message = format!("{{value: {}}}", count.state);
             let sub = subs.lock().unwrap();
             let x = sub.as_slice();
             for mut stream in x.into_iter(){
