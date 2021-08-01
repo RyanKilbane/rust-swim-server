@@ -30,7 +30,7 @@ pub mod lexer{
             self.read_position = Some(self.read_position.unwrap() + 1);
         }
 
-        pub fn skip_whitespace(&mut self){
+        pub fn _skip_whitespace(&mut self){
             if self.chr.unwrap() == 32 || self.chr.unwrap() == 10 || self.chr.unwrap() == 13 || self.chr.unwrap() == 9{
                 self.read_char()
             }

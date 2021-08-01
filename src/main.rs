@@ -4,6 +4,9 @@ mod counter;
 mod process_commands;
 mod parse;
 mod subscribe;
+mod exceptions;
+
+
 use std::rc::Rc;
 use std::io::prelude::*;
 use std::cell::RefCell;
@@ -36,14 +39,17 @@ fn handle_connection(stream: &TcpStream, mut subs: &mut Subs, counter: &MutCount
         let input_stream = handler(&stream);
         let commands = process_commands(input_stream);
         match parse_tokens(&commands, counter, &mut subs, stream){
-            Some(v) => writer(&mut mutable_stream, v),
-            None => writer(&mut mutable_stream, String::from("subscribed"))
+            Err(e) => writer(&mut mutable_stream, e.to_string()),
+            Ok(val) => match val{
+                Some(v) => writer(&mut mutable_stream, v),
+                None => writer(&mut mutable_stream, String::from("subscribed"))
+            }
         };
     }
 }
 
 fn handler(stream: &TcpStream) -> String{
-        let mut buffer = vec![0; 50];();
+        let mut buffer = vec![0; 100];();
         let mut s = stream;
         s.read(&mut buffer).unwrap();
         let request = String::from_utf8(buffer[..].to_vec()).unwrap();
@@ -53,5 +59,4 @@ fn handler(stream: &TcpStream) -> String{
 fn writer(stream: &mut Rc<RefCell<&TcpStream>>, value: String){
     stream.try_borrow_mut().unwrap().write(value.as_bytes()).unwrap();
     stream.try_borrow_mut().unwrap().flush().unwrap();
-
 }
