@@ -1,22 +1,25 @@
 pub mod subscribe{
-    use std::{io::Write, net::TcpStream, ops::Sub};
+    use std::{io::Write, net::TcpStream};
+    use std::cell::RefCell;
     pub struct Subscribers{
-        subscribers: Vec<TcpStream>
+        subscribers: RefCell<Vec<TcpStream>>
     }
 
     impl Subscribers{
         pub fn new() -> Self{
             Subscribers{
-                subscribers: Vec::new()
+                subscribers: RefCell::new(Vec::new())
             }
         }
 
         pub fn add_subscriber(&mut self, sub: TcpStream){
-            self.subscribers.push(sub);
+            let mut refs = self.subscribers.borrow_mut();
+            refs.push(sub);
         }
 
         pub fn send_message(self, message: &str){
-            for mut stream in self.subscribers.into_iter(){
+            let mut refs = self.subscribers.borrow_mut();
+            for stream in refs.iter_mut(){
                 stream.write(message.as_bytes()).unwrap();
             }
         }
