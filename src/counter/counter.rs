@@ -9,7 +9,7 @@ impl Counter{
             }
         }
 
-        pub fn alterState(&mut self, new_state: i64){
+        pub fn alter_state(&mut self, new_state: i64){
             self.state = new_state;
         }
     }
@@ -20,7 +20,7 @@ impl Counter{
         #[test]
         fn test_increment(){
             let mut counter = Counter::new(10);
-            counter.alterState(123);
+            counter.alter_state(123);
             assert_eq!(counter.state, 123);
         }
     }
