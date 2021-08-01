@@ -32,7 +32,7 @@ pub mod parse{
                 println!("Writing");
                 println!("{:?}", stream);
                 println!("{}", message);
-                stream.write(message.as_bytes()).unwrap();
+                stream.write_all(message.as_bytes()).unwrap();
                 stream.flush().unwrap();
 
             }

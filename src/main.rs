@@ -59,5 +59,4 @@ fn handler(stream: &TcpStream) -> String{
 fn writer(stream: &mut Rc<RefCell<&TcpStream>>, value: String){
     stream.try_borrow_mut().unwrap().write(value.as_bytes()).unwrap();
     stream.try_borrow_mut().unwrap().flush().unwrap();
-
 }
