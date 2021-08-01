@@ -1,4 +1,5 @@
 pub mod counter{
+    #[derive(Clone)]
     pub struct Counter{
         pub state: i64
     }
