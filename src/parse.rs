@@ -2,21 +2,22 @@ pub mod parse{
     use std::io::{Write};
     use std::{format};
     use std::net::TcpStream;
-    use std::rc::Rc;
+    use crate::{MutCount, Subs};
     use crate::token::token::token::*;
-    use crate::counter::counter::counter::Counter;
-    use std::cell::RefCell;
 
-    pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &RefCell<Counter>, subs: &mut Vec<TcpStream>, stream: &Rc<RefCell<TcpStream>>) -> Option<String>{
+    pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &MutCount, subs: &mut Subs, stream: &TcpStream) -> Option<String>{
         // Token array should look something like [{, COMMAND, COLON, ACTION, COMMA, VALUE, COLON, INT, }]
         if commands[3].token == GET{
-            Some(format!("{{value: {}}}", counter.borrow().state))
+            let count = counter.try_read().unwrap();
+            Some(format!("{{value: {}}}", count.state))
         }
         else if commands[3].token == SET {
-            counter.borrow_mut().alter_state(commands[7].literal.parse::<i64>().unwrap());
-            let message = format!("{{value: {}}}\n", counter.borrow().state);
-            // let refs = subs.borrow_mut();
-            for stream in subs.into_iter(){
+            let mut count = counter.try_write().unwrap();
+            count.alter_state(commands[7].literal.parse::<i64>().unwrap());
+            let message = format!("{{value: {}}}", count.state);
+            let sub = subs.lock().unwrap();
+            let x = sub.as_slice();
+            for mut stream in x.into_iter(){
                 println!("Writing");
                 println!("{:?}", stream);
                 println!("{}", message);
@@ -28,8 +29,10 @@ pub mod parse{
         }
         else{
             // let mut refs = subs.borrow_mut();
-            let s = stream.borrow_mut();
-            subs.push(s.try_clone().unwrap());
+            // let s = stream.clone().borrow().try_clone().unwrap();
+            // let mut refs = subs.lock().unwrap().take().unwrap();
+            let mut sub = subs.lock().unwrap();
+            sub.push(TcpStream::try_clone(stream).unwrap());
             println!("{:?}", subs);
             None
         }
