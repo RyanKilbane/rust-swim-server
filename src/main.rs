@@ -4,7 +4,7 @@ mod counter;
 mod process_commands;
 mod parse;
 mod subscribe;
-use std::borrow::Borrow;
+use std::rc::Rc;
 use std::io::prelude::*;
 use std::cell::RefCell;
 use std::{io::{Read}, net::{TcpListener, TcpStream}};
@@ -14,26 +14,50 @@ use crate::parse::parse::parse_tokens;
 use crate::process_commands::process_commands::process_commands as process;
 
 fn main() {
-    let mut global_state: RefCell<Counter> = RefCell::new(Counter::new(0));
-    let mut subscribers: RefCell<Subscribers> = RefCell::new(Subscribers::new());
+    let global_state: RefCell<Counter> = RefCell::new(Counter::new(0));
+    // let subscribers: Rc<RefCell<Subscribers>> = Rc::new(RefCell::new(Subscribers::new()));
+    let mut subscribers: Vec<TcpStream> = Vec::new();
     let listen = TcpListener::bind("127.0.0.1:8080").unwrap();
     for stream in listen.incoming(){
-        let stream: TcpStream = stream.unwrap();
-        println!("Connection established!");
-        handler(stream, &global_state, &subscribers);
+        let stream: Rc<RefCell<TcpStream>> = Rc::new(RefCell::new(stream.unwrap()));
+        loop{
+            println!("Connection established!");
+            let input_str = handler(&stream);
+            let commands = process::process_commands(input_str);
+            let value = match parse_tokens(&commands, &global_state, &mut subscribers, &stream){
+                Some(v) => writer(&stream, v),
+                None => writer(&stream, String::from("subscribed"))
+            };
+        }
     }
 }
 
-fn handler(mut stream: TcpStream, counter: &RefCell<Counter>, sub: &RefCell<Subscribers>){
-    loop{
-        let mut buffer = vec![0; 50];
-        stream.read(&mut buffer).unwrap();
+fn handler(stream: &Rc<RefCell<TcpStream>>) -> String{
+        let mut buffer = vec![0; 50];();
+        let mut s = stream.borrow_mut();
+        s.read(&mut buffer).unwrap();
         let request = String::from_utf8(buffer[..].to_vec()).unwrap();
-        println!("{:?}", request.as_bytes());
-        let commands = process::process_commands(request);
-        let value = parse_tokens(&commands, counter, sub).unwrap();
-        stream.write(value.as_bytes()).unwrap();
-        stream.flush().unwrap();
-    }
-    
+        request
 }
+
+fn writer(stream: &Rc<RefCell<TcpStream>>, value: String){
+    let mut s = stream.borrow_mut();
+    s.write(value.as_bytes()).unwrap();
+    s.flush().unwrap();
+
+}
+
+
+// fn handler(mut stream: &Rc<RefCell<TcpStream>>, counter: &RefCell<Counter>, sub: &Rc<RefCell<Subscribers>>){
+//     loop{
+//         let mut buffer = vec![0; 50];
+//         let mut s = stream.borrow_mut();
+//         s.read(&mut buffer).unwrap();
+//         let request = String::from_utf8(buffer[..].to_vec()).unwrap();
+//         let commands = process::process_commands(request);
+//         let value = parse_tokens(&commands, counter, &sub, stream).unwrap();
+//         s.write(value.as_bytes()).unwrap();
+//         s.flush().unwrap();
+//     }
+    
+// }
