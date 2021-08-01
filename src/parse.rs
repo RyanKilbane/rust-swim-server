@@ -9,11 +9,11 @@ pub mod parse{
     pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &MutCount, subs: &mut Subs, stream: &TcpStream) -> Result<Option<String>, ParseError>{
         // Token array should look something like [{, COMMAND, COLON, ACTION, COMMA, VALUE, COLON, INT, }]
         if commands[3].token == GET{
-            let count = counter.try_read().unwrap();
+            let count = counter.lock().unwrap();
             Ok(Some(format!("{{value: {}}}", count.state)))
         }
         else if commands[3].token == SET {
-            let mut count = counter.try_write().unwrap();
+            let mut count = counter.lock().unwrap();
 
             let value = match commands.get(7){
                 Some(val) => match val.literal.parse::<i64>(){

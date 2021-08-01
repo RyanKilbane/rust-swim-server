@@ -18,10 +18,10 @@ use process_commands::process_commands::process_commands::*;
 
 use std::sync::{RwLock, Arc, Mutex};
 type Subs = Arc<Mutex<Vec<TcpStream>>>;
-type MutCount = Arc<RwLock<Counter>>;
+type MutCount = Arc<Mutex<Counter>>;
 
 fn main() {
-    let global_state: MutCount = Arc::new(RwLock::new(Counter::new(0)));
+    let global_state: MutCount = Arc::new(Mutex::new(Counter::new(0)));
     // let subscribers: Rc<RefCell<Subscribers>> = Rc::new(RefCell::new(Subscribers::new()));
     let subscribers: Subs = Arc::new(Mutex::new(Vec::new()));
     let listen = TcpListener::bind("127.0.0.1:8080").unwrap();
