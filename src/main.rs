@@ -14,16 +14,17 @@ use std::thread::{self};
 use std::{io::{Read}, net::{TcpListener, TcpStream}};
 use counter::counter::counter::Counter;
 use crate::parse::parse::parse_tokens;
+use crate::subscribe::subscribe::subscribe::{Subscribers, SubsTrait};
 use process_commands::process_commands::process_commands::*;
 
 use std::sync::{Arc, Mutex};
-type Subs = Arc<Mutex<Vec<TcpStream>>>;
+type Subs = Arc<Mutex<Subscribers>>;
 type MutCount = Arc<Mutex<Counter>>;
 
 fn main() {
     let global_state: MutCount = Arc::new(Mutex::new(Counter::new(0)));
     // let subscribers: Rc<RefCell<Subscribers>> = Rc::new(RefCell::new(Subscribers::new()));
-    let subscribers: Subs = Arc::new(Mutex::new(Vec::new()));
+    let subscribers: Subs = Arc::new(Mutex::new(Subscribers::new()));
     let listen = TcpListener::bind("127.0.0.1:8080").unwrap();
     for stream in listen.incoming(){
         let y = global_state.clone();

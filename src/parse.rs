@@ -1,9 +1,9 @@
 pub mod parse{
-    use std::io::{Write};
     use std::{format};
     use std::net::TcpStream;
     use crate::{MutCount, Subs};
     use crate::token::token::token::*;
+    use crate::subscribe::subscribe::subscribe::SubsTrait;
     use crate::exceptions::parse_error::parse_error::ParseError;
 
     pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &MutCount, subs: &mut Subs, stream: &TcpStream) -> Result<Option<String>, ParseError>{
@@ -25,21 +25,14 @@ pub mod parse{
 
             count.alter_state(value);
             let message = format!("{{value: {}}}", count.state);
-            let sub = subs.lock().unwrap();
-            let x = sub.as_slice();
-            println!("{:?}", x);
-            for mut stream in x.into_iter(){
-                stream.flush().unwrap();
-                println!("Writing");
-                stream.write_all(message.as_bytes()).unwrap();
-                stream.flush().unwrap();
-
-            }
+            let x = subs.lock().unwrap().clone();
+            x.send_message(&message);
             Ok(Some(message))
         }
         else{
-            let mut sub = subs.lock().unwrap();
-            sub.push(TcpStream::try_clone(stream).unwrap());
+            let stream_clone = TcpStream::try_clone(stream).unwrap();
+            let mut x = subs.lock().unwrap();
+            x.add_subscriber(stream_clone);
             println!("{:?}", subs);
             Ok(None)
         }
