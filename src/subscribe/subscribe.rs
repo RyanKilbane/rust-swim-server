@@ -1,4 +1,5 @@
 pub mod subscribe{
+    use std::fmt::Debug;
     use std::{io::Write, net::TcpStream};
     use std::sync::{Arc, Mutex};
 
@@ -28,7 +29,7 @@ pub mod subscribe{
             }
         }
     }
-    pub trait SubsTrait {
+    pub trait SubsTrait: Clone + Debug {
         fn new() -> Self;
         fn add_subscriber(&mut self, sub: TcpStream);
         fn send_message(self, message: &str);
