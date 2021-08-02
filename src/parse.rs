@@ -1,12 +1,14 @@
 pub mod parse{
     use std::{format};
     use std::net::TcpStream;
-    use crate::{MutCount, Subs};
+    use crate::{MutCount};
+    use std::sync::{Arc, Mutex};
     use crate::token::token::token::*;
     use crate::subscribe::subscribe::subscribe::SubsTrait;
     use crate::exceptions::parse_error::parse_error::ParseError;
 
-    pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &MutCount, subs: &mut Subs, stream: &TcpStream) -> Result<Option<String>, ParseError>{
+
+    pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &MutCount, subs: &mut Arc<Mutex<impl SubsTrait>>, stream: &TcpStream) -> Result<Option<String>, ParseError>{
         // Token array should look something like [{, COMMAND, COLON, ACTION, COMMA, VALUE, COLON, INT, }]
         if commands[3].token == GET{
             let count = counter.lock().unwrap();
