@@ -3,6 +3,7 @@ pub mod parse{
     use std::net::TcpStream;
     use crate::{MutCount, Subs};
     use crate::token::token::token::*;
+    use crate::subscribe::subscribe::subscribe::SubsTrait;
     use crate::exceptions::parse_error::parse_error::ParseError;
 
     pub fn parse_tokens<'a>(commands: &Vec<Token>, counter: &MutCount, subs: &mut Subs, stream: &TcpStream) -> Result<Option<String>, ParseError>{

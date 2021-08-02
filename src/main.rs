@@ -14,7 +14,7 @@ use std::thread::{self};
 use std::{io::{Read}, net::{TcpListener, TcpStream}};
 use counter::counter::counter::Counter;
 use crate::parse::parse::parse_tokens;
-use crate::subscribe::subscribe::subscribe::Subscribers;
+use crate::subscribe::subscribe::subscribe::{Subscribers, SubsTrait};
 use process_commands::process_commands::process_commands::*;
 
 use std::sync::{Arc, Mutex};
