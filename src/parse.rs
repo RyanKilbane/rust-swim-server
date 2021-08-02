@@ -31,8 +31,6 @@ pub mod parse{
             for mut stream in x.into_iter(){
                 stream.flush().unwrap();
                 println!("Writing");
-                println!("{:?}", stream);
-                println!("{}", message);
                 stream.write_all(message.as_bytes()).unwrap();
                 stream.flush().unwrap();
 
@@ -44,6 +42,15 @@ pub mod parse{
             sub.push(TcpStream::try_clone(stream).unwrap());
             println!("{:?}", subs);
             Ok(None)
+        }
+    }
+
+    #[cfg(test)]
+    mod test{
+        use super::*;
+        #[test]
+        fn test_parse_token(){
+
         }
     }
 }

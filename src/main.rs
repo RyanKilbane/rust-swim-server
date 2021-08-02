@@ -16,7 +16,7 @@ use counter::counter::counter::Counter;
 use crate::parse::parse::parse_tokens;
 use process_commands::process_commands::process_commands::*;
 
-use std::sync::{RwLock, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 type Subs = Arc<Mutex<Vec<TcpStream>>>;
 type MutCount = Arc<Mutex<Counter>>;
 
@@ -53,7 +53,6 @@ fn handler(stream: &TcpStream) -> String{
         let mut buffer = vec![0; 100];();
         let mut s = stream;
         s.read(&mut buffer).unwrap();
-        println!("{:?}", buffer);
         let request = String::from_utf8(buffer[..].to_vec()).unwrap();
         request.chars().filter(|char| !char.is_whitespace()).collect()
 }
