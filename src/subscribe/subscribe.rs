@@ -1,25 +1,30 @@
 pub mod subscribe{
+
     use std::{io::Write, net::TcpStream};
-    use std::cell::RefCell;
+    use std::sync::{Arc, Mutex};
+
+    type Subs = Arc<Mutex<Vec<TcpStream>>>;
+
+    #[derive(Clone, Debug)]
     pub struct Subscribers{
-        subscribers: RefCell<Vec<TcpStream>>
+        subscribers: Subs
     }
 
     impl Subscribers{
         pub fn new() -> Self{
             Subscribers{
-                subscribers: RefCell::new(Vec::new())
+                subscribers: Arc::new(Mutex::new(Vec::new()))
             }
         }
 
         pub fn add_subscriber(&mut self, sub: TcpStream){
-            let mut refs = self.subscribers.borrow_mut();
+            let mut refs = self.subscribers.lock().unwrap();
             refs.push(sub);
         }
 
         pub fn send_message(self, message: &str){
-            let mut refs = self.subscribers.borrow_mut();
-            for stream in refs.iter_mut(){
+            let refs = self.subscribers.lock().unwrap();
+            for mut stream in refs.iter(){
                 stream.write(message.as_bytes()).unwrap();
             }
         }
