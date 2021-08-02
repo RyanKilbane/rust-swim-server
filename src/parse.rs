@@ -44,13 +44,4 @@ pub mod parse{
             Ok(None)
         }
     }
-
-    #[cfg(test)]
-    mod test{
-        use super::*;
-        #[test]
-        fn test_parse_token(){
-
-        }
-    }
 }
