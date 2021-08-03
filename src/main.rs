@@ -13,6 +13,7 @@ use std::cell::RefCell;
 use std::thread::{self};
 use std::{io::{Read}, net::{TcpListener, TcpStream}};
 use counter::counter::counter::Counter;
+use token::token::token::Token;
 use crate::parse::parse::parse_tokens;
 use crate::subscribe::subscribe::subscribe::{Subscribers};
 use process_commands::process_commands::process_commands::*;
@@ -40,13 +41,18 @@ fn handle_connection(stream: &TcpStream, mut subs: &mut Subs, counter: &MutCount
         let mut mutable_stream: Rc<RefCell<&TcpStream>> = Rc::new(RefCell::new(stream));
         let input_stream = handler(&stream);
         let commands = process_commands(input_stream);
-        match parse_tokens(&commands, counter, &mut subs, stream){
-            Err(e) => writer(&mut mutable_stream, e.to_string()),
-            Ok(val) => match val{
-                Some(v) => writer(&mut mutable_stream, v),
-                None => writer(&mut mutable_stream, String::from("subscribed"))
+        match scan_for_illegal(&commands){
+            true => {writer(&mut mutable_stream, String::from("There was an illegal token in your command"))},
+            false => {
+                match parse_tokens(&commands, counter, &mut subs, stream){
+                    Err(e) => writer(&mut mutable_stream, e.to_string()),
+                    Ok(val) => match val{
+                        Some(v) => writer(&mut mutable_stream, v),
+                        None => writer(&mut mutable_stream, String::from("subscribed"))
+                    }
+                }
             }
-        };
+        }
     }
 }
 
@@ -61,4 +67,17 @@ fn handler(stream: &TcpStream) -> String{
 fn writer(stream: &mut Rc<RefCell<&TcpStream>>, value: String){
     stream.try_borrow_mut().unwrap().write(value.as_bytes()).unwrap();
     stream.try_borrow_mut().unwrap().flush().unwrap();
+}
+
+fn scan_for_illegal(commands: &Vec<Token>) -> bool{
+    for token in commands.into_iter(){
+        println!("{}", token.literal);
+        if token.token == "ILLEGAL"{
+            return true
+        }
+        else {
+            continue;
+        }
+    }
+    return false
 }
