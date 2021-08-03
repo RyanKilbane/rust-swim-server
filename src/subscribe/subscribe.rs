@@ -10,12 +10,15 @@ pub mod subscribe{
         subscribers: Subs
     }
 
-    impl SubsTrait for Subscribers{
-        fn new() -> Self{
+    impl Subscribers{
+        pub fn new() -> Self{
             Subscribers{
                 subscribers: Arc::new(Mutex::new(Vec::new()))
             }
         }
+    }
+
+    impl SubsTrait for Subscribers{
 
         fn add_subscriber(&mut self, sub: TcpStream){
             let mut refs = self.subscribers.lock().unwrap();
@@ -30,7 +33,6 @@ pub mod subscribe{
         }
     }
     pub trait SubsTrait: Clone + Debug {
-        fn new() -> Self;
         fn add_subscriber(&mut self, sub: TcpStream);
         fn send_message(self, message: &str);
     }
