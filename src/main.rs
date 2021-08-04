@@ -7,14 +7,14 @@ mod subscribe;
 mod exceptions;
 
 
-use std::rc::Rc;
 use std::io::prelude::*;
 use std::cell::RefCell;
 use std::thread::{self};
-use std::{io::{Read}, net::{TcpListener, TcpStream}};
+use std::{io::{Read}, net::{TcpListener, TcpStream, Shutdown}};
 use counter::counter::counter::Counter;
+use token::token::token::Token;
 use crate::parse::parse::parse_tokens;
-use crate::subscribe::subscribe::subscribe::{Subscribers, SubsTrait};
+use crate::subscribe::subscribe::subscribe::{Subscribers};
 use process_commands::process_commands::process_commands::*;
 
 use std::sync::{Arc, Mutex};
@@ -37,16 +37,26 @@ fn main() {
 fn handle_connection(stream: &TcpStream, mut subs: &mut Subs, counter: &MutCount){
     println!("Connected!");
     loop{
-        let mut mutable_stream: Rc<RefCell<&TcpStream>> = Rc::new(RefCell::new(stream));
+        let mut mutable_stream: RefCell<&TcpStream> = RefCell::new(stream);
         let input_stream = handler(&stream);
         let commands = process_commands(input_stream);
-        match parse_tokens(&commands, counter, &mut subs, stream){
-            Err(e) => writer(&mut mutable_stream, e.to_string()),
-            Ok(val) => match val{
-                Some(v) => writer(&mut mutable_stream, v),
-                None => writer(&mut mutable_stream, String::from("subscribed"))
+        if commands.len() == 0{
+            println!("shutting down");
+            stream.shutdown(Shutdown::Both).unwrap();
+            break
+        }
+        match scan_for_illegal(&commands){
+            true => {writer(&mut mutable_stream, String::from("There was an illegal token in your command"))},
+            false => {
+                match parse_tokens(&commands, counter, &mut subs, stream){
+                    Err(e) => writer(&mut mutable_stream, e.to_string()),
+                    Ok(val) => match val{
+                        Some(v) => writer(&mut mutable_stream, v),
+                        None => writer(&mut mutable_stream, String::from("subscribed"))
+                    }
+                }
             }
-        };
+        }
     }
 }
 
@@ -58,7 +68,20 @@ fn handler(stream: &TcpStream) -> String{
         request.chars().filter(|char| !char.is_whitespace()).collect()
 }
 
-fn writer(stream: &mut Rc<RefCell<&TcpStream>>, value: String){
+fn writer(stream: &mut RefCell<&TcpStream>, value: String){
     stream.try_borrow_mut().unwrap().write(value.as_bytes()).unwrap();
     stream.try_borrow_mut().unwrap().flush().unwrap();
+}
+
+fn scan_for_illegal(commands: &Vec<Token>) -> bool{
+    for token in commands.into_iter(){
+        println!("{}", token.literal);
+        if token.token == "ILLEGAL"{
+            return true
+        }
+        else {
+            continue;
+        }
+    }
+    return false
 }

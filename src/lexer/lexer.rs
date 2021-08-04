@@ -71,7 +71,7 @@ pub mod lexer{
         }
 
         fn is_number(token: &u8) -> bool{
-            let x = if token < &57 && token > &47{ 
+            let x = if token < &58 && token > &47{ 
                 true
             }
             else{
@@ -155,6 +155,22 @@ pub mod lexer{
             assert_eq!(l.next_token().token, "COMMAND");
             assert_eq!(l.next_token().token, ":");
             assert_eq!(l.next_token().token, "GET");
+            assert_eq!(l.next_token().token, "}");
+
+        }
+
+        #[test]
+        fn test_tokens_with_number_nide(){
+            let commands = "{command:set,value:9}";
+            let mut l = Lexer::new(commands);
+            assert_eq!(l.next_token().literal, "{");
+            assert_eq!(l.next_token().token, "COMMAND");
+            assert_eq!(l.next_token().token, ":");
+            assert_eq!(l.next_token().token, "SET");
+            assert_eq!(l.next_token().token, ",");
+            assert_eq!(l.next_token().token, "VALUE");
+            assert_eq!(l.next_token().token, ":");
+            assert_eq!(l.next_token().token, "INT");
             assert_eq!(l.next_token().token, "}");
 
         }
