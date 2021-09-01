@@ -31,9 +31,17 @@ pub mod subscribe{
                 stream.write(message.as_bytes()).unwrap();
             }
         }
+
+        fn unsubscribe(self, sub: &TcpStream) {
+            let mut refs = self.subscribers.lock().unwrap();
+            let loc = refs.iter().position(|x| x.peer_addr().unwrap() == sub.peer_addr().unwrap()).unwrap();
+            refs.remove(loc);
+            
+        }
     }
     pub trait SubsTrait: Clone + Debug {
         fn add_subscriber(&mut self, sub: TcpStream);
         fn send_message(self, message: &str);
+        fn unsubscribe(self, sub: &TcpStream);
     }
 }
