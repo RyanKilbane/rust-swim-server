@@ -43,7 +43,6 @@ fn handle_connection(stream: &TcpStream, mut subs: &mut Subs, counter: &MutCount
         if commands.len() == 0{
             println!("shutting down");
             stream.shutdown(Shutdown::Both).unwrap();
-            break
         }
         match scan_for_illegal(&commands){
             true => {writer(&mut mutable_stream, String::from("There was an illegal token in your command"))},
